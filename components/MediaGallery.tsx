@@ -21,7 +21,8 @@ export const MediaGallery = ({ isGlobalDragging }: { isGlobalDragging: boolean }
       id: Math.random().toString(36).substr(2, 9),
       file,
       preview: URL.createObjectURL(file),
-      label: 'unlabeled',
+      primaryLabel: 'unlabeled',
+      secondaryLabels: [],
       description: '',
       isFocused: false,
     }));

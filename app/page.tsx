@@ -1,14 +1,21 @@
+// app/page.tsx
+
 "use client"
 import { useState } from 'react';
-import { SR1Data } from '@/lib/types';
+import { SR1Data, EvidenceFile } from '@/lib/types';
+import { fileToBase64 } from '@/lib/utils';
+
 
 import { MediaGallery } from '@/components/MediaGallery';
 
 export default function Home() {
   const [isGlobalDragging, setIsGlobalDragging] = useState(false);
 
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [data, setData] = useState<SR1Data | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<SR1Data | null>(null);
+
+  const [evidence, _] = useState<EvidenceFile[]>([]);
+  const [description, setDescription] = useState("");
 
   // Prevent browser default behavior for the whole page
   const handleGlobalDragOver = (e: React.DragEvent) => {
@@ -27,7 +34,37 @@ export default function Home() {
     e.preventDefault();
     setIsGlobalDragging(false);
     // Note: The actual file processing will still happen in MediaGallery 
-    // because that's where the state lives, but we'll trigger it via the overlay.
+    // because that's where the state lives; we'll trigger it via the overlay.
+  };
+
+  const handleAnalyze = async () => {
+    setIsAnalyzing(true);
+    try {
+      const payload = await Promise.all(evidence.map(async (item) => ({
+        primaryLabel: item.primaryLabel,
+        secondaryLabels: item.secondaryLabels,
+        description: item.description,
+        base64: await fileToBase64(item.file)
+      })));
+
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          evidence: payload,
+          context: description
+        }),
+      });
+
+      const result = await response.json();
+      setAnalysisResult(result);
+      console.log("SR-1 Data:", result);
+
+    } catch (error) {
+      console.error("Analysis failed:", error);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (
@@ -65,12 +102,17 @@ export default function Home() {
               <textarea 
                 className="w-full p-3 border border-gray-300 rounded-md h-32 text-gray-700"
                 placeholder="Describe what happened in your own words..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
               />
-              <button 
-                className="mt-4 w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400"
-                onClick={() => setIsProcessing(true)}
+              <button
+                className="mt-4 w-full bg-blue-600 text-white py-3 rounded-lg
+                            font-medium hover:bg-blue-700 cursor-pointer
+                            disabled:cursor-not-allowed disabled:bg-gray-400"
+                disabled={isAnalyzing || (evidence.length === 0 && description === "")}
+                onClick={handleAnalyze}
               >
-                {isProcessing ? "Analyzing with AI..." : "Generate SR-1 Data"}
+                {isAnalyzing ? "Analyzing with AI..." : "Generate SR-1 Data"}
               </button>
             </div>
           </section>
@@ -80,25 +122,40 @@ export default function Home() {
             <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg min-h-[400px]">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-lg font-semibold">AI Interpretation (Structured)</h2>
-                {isProcessing && <div className="animate-pulse text-blue-400 text-sm">Processing...</div>}
+                {isAnalyzing && <div className="animate-pulse text-blue-400 text-sm">Processing...</div>}
               </div>
 
-              {!data && !isProcessing && (
+              {!analysisResult && !isAnalyzing && (
                 <div className="text-gray-500 italic text-center mt-20">
                   Waiting for data analysis...
                 </div>
               )}
 
               {/* Data Display Placeholder */}
-              {isProcessing && (
+              {isAnalyzing && (
                  <div className="space-y-4 font-mono text-sm">
                    <div className="h-4 bg-slate-800 rounded w-3/4 animate-pulse" />
                    <div className="h-4 bg-slate-800 rounded w-1/2 animate-pulse" />
                    <div className="h-4 bg-slate-800 rounded w-5/6 animate-pulse" />
                  </div>
               )}
-              
-              {/* This is where your SR1Data component will render */}
+
+              {analysisResult && !isAnalyzing && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                  <pre className="text-xs md:text-sm font-mono text-blue-300
+                                  overflow-x-auto p-4 bg-slate-950/50 rounded-lg
+                                  border border-slate-800 scrollbar-thin
+                                  scrollbar-thumb-slate-700">
+                    {JSON.stringify(analysisResult, null, 2)}
+                  </pre>
+                  <button 
+                    onClick={() => setAnalysisResult(null)}
+                    className="mt-4 text-xs text-slate-500 hover:text-white transition-colors"
+                  >
+                    &larr; Reset Analysis
+                  </button>
+                </div>
+              )}
             </div>
           </section>
 
