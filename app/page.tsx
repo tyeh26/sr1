@@ -14,7 +14,7 @@ export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<SR1Data | null>(null);
 
-  const [evidence, _] = useState<EvidenceFile[]>([]);
+  const [evidence, setEvidence] = useState<EvidenceFile[]>([]);
   const [description, setDescription] = useState("");
 
   // Prevent browser default behavior for the whole page
@@ -94,7 +94,10 @@ export default function Home() {
           {/* LEFT COLUMN: INPUT */}
           <section className="space-y-6">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <MediaGallery isGlobalDragging={isGlobalDragging} />
+              <MediaGallery
+                isGlobalDragging={isGlobalDragging}
+                evidence={evidence}
+                setEvidence={setEvidence} />
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
@@ -118,16 +121,16 @@ export default function Home() {
           </section>
 
           {/* RIGHT COLUMN: AI OUTPUT */}
-          <section className="space-y-6">
+          <section className="space-y-6 min-w-0 w-full">
             <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg min-h-[400px]">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold">AI Interpretation (Structured)</h2>
+                <h2 className="text-lg font-semibold">Accident Summary</h2>
                 {isAnalyzing && <div className="animate-pulse text-blue-400 text-sm">Processing...</div>}
               </div>
 
               {!analysisResult && !isAnalyzing && (
                 <div className="text-gray-500 italic text-center mt-20">
-                  Waiting for data analysis...
+                  Waiting for analysis...
                 </div>
               )}
 
@@ -143,9 +146,10 @@ export default function Home() {
               {analysisResult && !isAnalyzing && (
                 <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                   <pre className="text-xs md:text-sm font-mono text-blue-300
-                                  overflow-x-auto p-4 bg-slate-950/50 rounded-lg
-                                  border border-slate-800 scrollbar-thin
-                                  scrollbar-thumb-slate-700">
+                                  p-4 bg-slate-950/50 rounded-lg
+                                  border border-slate-800 
+                                  whitespace-pre-wrap break-words 
+                                  w-full block">
                     {JSON.stringify(analysisResult, null, 2)}
                   </pre>
                   <button 

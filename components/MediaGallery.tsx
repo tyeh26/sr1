@@ -1,11 +1,17 @@
 "use client"
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
+
 import { EvidenceFile } from '@/lib/types';
 import { EvidenceCard } from './EvidenceCard';
 import { FocusView } from './FocusView';
 
-export const MediaGallery = ({ isGlobalDragging }: { isGlobalDragging: boolean }) => {
-  const [evidence, setEvidence] = useState<EvidenceFile[]>([]);
+interface MediaGalleryProps {
+  isGlobalDragging: boolean;
+  evidence: EvidenceFile[];
+  setEvidence: React.Dispatch<React.SetStateAction<EvidenceFile[]>>;
+}
+
+export const MediaGallery = ({ isGlobalDragging, evidence, setEvidence }: MediaGalleryProps) => {
 
   // Function to handle the actual file drop
   const handleDrop = (e: React.DragEvent) => {
@@ -16,28 +22,51 @@ export const MediaGallery = ({ isGlobalDragging }: { isGlobalDragging: boolean }
   };
 
   // Helper to process files into our state format
-  const processFiles = useCallback((files: File[]) => {
-    const newItems: EvidenceFile[] = files.map((file) => ({
-      id: Math.random().toString(36).substr(2, 9),
-      file,
-      preview: URL.createObjectURL(file),
-      primaryLabel: 'unlabeled',
-      secondaryLabels: [],
-      description: '',
-      isFocused: false,
-    }));
+  const processFiles = useCallback(async (files: File[]) => {
+    // Dynamically import heic2any only when this function runs (client-side)
+    const heic2any = (await import("heic2any")).default;
+
+    const processedItems: EvidenceFile[] = await Promise.all(
+        files.map(async (file) => {
+        let fileToProcess = file;
+        const isHeic = file.name.toLowerCase().endsWith(".heic") || file.name.toLowerCase().endsWith(".heif");
+
+        if (isHeic) {
+            try {
+            const convertedBlob = await heic2any({
+                blob: file,
+                toType: "image/jpeg",
+                quality: 0.8,
+            });
+            
+            fileToProcess = new File(
+                [Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob],
+                file.name.replace(/\.(heic|heif)$/i, ".jpg"),
+                { type: "image/jpeg" }
+            );
+            } catch (error) {
+            console.error("HEIC Conversion failed:", error);
+            }
+        }
+
+        return {
+            id: Math.random().toString(36).substring(2, 9),
+            file: fileToProcess,
+            preview: URL.createObjectURL(fileToProcess),
+            primaryLabel: 'unlabeled',
+            secondaryLabels: [],
+            description: '',
+            isFocused: false,
+        };
+        })
+    );
+
     setEvidence(prev => {
-    // 1. Unfocus everything currently in the gallery
-    const unfocusedPrev = prev.map(item => ({ ...item, isFocused: false }));
-
-    // 2. Focus the first image of the NEWLY dropped batch
-    if (newItems.length > 0) {
-      newItems[0].isFocused = true;
-    }
-
-    return [...unfocusedPrev, ...newItems];
-  });
-  }, [evidence.length]);
+        const unfocusedPrev = prev.map(item => ({ ...item, isFocused: false }));
+        if (processedItems.length > 0) processedItems[0].isFocused = true;
+        return [...unfocusedPrev, ...processedItems];
+    });
+    }, []);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {

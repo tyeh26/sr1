@@ -39,9 +39,23 @@ export const FocusView = ({ item, onUpdate }: {
   return (
     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
       {/* 1. IMAGE DISPLAY */}
-      <div className="aspect-[16/10] bg-slate-900 flex items-center justify-center p-2">
-        <img src={item.preview} className="max-h-full rounded-lg object-contain shadow-2xl" alt="Evidence" />
-      </div>
+      <div className="bg-slate-950 w-full border-b border-slate-800"> 
+
+  <div className="relative w-full h-80 flex items-center justify-center p-4">
+    <img 
+      src={item.preview} 
+      alt="Evidence focused"
+      // max-h-full ensures the image shrinks to fit the 350px container
+      // w-auto keeps the aspect ratio correct
+      className="max-w-full max-h-full w-auto h-auto object-contain shadow-2xl rounded-sm"
+    />
+    
+    {/* Info Badge */}
+    <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-sm px-2 py-1 rounded text-[10px] text-white/50 font-mono">
+      {item.file.type.split('/')[1].toUpperCase()} • {Math.round(item.file.size / 1024)}KB
+    </div>
+  </div>
+</div>
 
       <div className="p-6 space-y-6 bg-white">
         {/* PRIMARY LABELS */}
