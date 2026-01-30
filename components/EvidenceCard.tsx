@@ -1,6 +1,14 @@
 import { EvidenceFile } from '@/lib/types';
 
-export const EvidenceCard = ({ item, onFocus }: { item: EvidenceFile; onFocus: () => void }) => {
+export const EvidenceCard = ({
+  item,
+  onFocus,
+  onUpdate
+}: {
+  item: EvidenceFile;
+  onFocus: () => void;
+  onUpdate: (id: string, updates: Partial<EvidenceFile>) => void; // And define it here
+}) => {
   return (
     <div 
       onClick={onFocus}
