@@ -15,3 +15,14 @@ export interface SR1Data {
     plate: string;
   };
 }
+
+export type EvidenceLabel = 'me' | 'other_party' | 'scene' | 'document' | 'unlabeled';
+
+export interface EvidenceFile {
+  id: string;
+  file: File;
+  preview: string;
+  label: EvidenceLabel;
+  description: string;
+  isFocused: boolean;
+}

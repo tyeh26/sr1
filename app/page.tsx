@@ -2,12 +2,50 @@
 import { useState } from 'react';
 import { SR1Data } from '@/lib/types';
 
+import { MediaGallery } from '@/components/MediaGallery';
+
 export default function Home() {
+  const [isGlobalDragging, setIsGlobalDragging] = useState(false);
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [data, setData] = useState<SR1Data | null>(null);
 
+  // Prevent browser default behavior for the whole page
+  const handleGlobalDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsGlobalDragging(true);
+  };
+
+  const handleGlobalDragLeave = (e: React.DragEvent) => {
+    // Only stop dragging if we leave the window, not just a child element
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsGlobalDragging(false);
+    }
+  }
+
+  const handleGlobalDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsGlobalDragging(false);
+    // Note: The actual file processing will still happen in MediaGallery 
+    // because that's where the state lives, but we'll trigger it via the overlay.
+  };
+
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
+    <main
+      onDragOver={handleGlobalDragOver}
+      onDragLeave={handleGlobalDragLeave}
+      onDrop={handleGlobalDrop}
+      className="min-h-screen bg-gray-50 p-8"
+    >
+      {/* Global Whole-Page Drag & Drop Overlay */}
+      {isGlobalDragging && (
+        <div className="fixed inset-0 z-50 bg-blue-500/20 backdrop-blur-sm border-4 border-dashed border-blue-500 flex items-center justify-center pointer-events-none">
+          <div className="bg-white p-6 rounded-2xl shadow-2xl scale-110 transition-transform">
+            <p className="text-blue-600 font-bold text-xl">Drop images anywhere to add evidence</p>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto">
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">SR-1 AI Assistant</h1>
@@ -19,11 +57,7 @@ export default function Home() {
           {/* LEFT COLUMN: INPUT */}
           <section className="space-y-6">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <h2 className="text-lg font-semibold mb-4">1. Upload Evidence</h2>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-blue-500 transition-colors cursor-pointer">
-                <p className="text-gray-500">Drop photos or click to upload</p>
-                <span className="text-xs text-gray-400 font-mono">IMG_0111.png, etc.</span>
-              </div>
+              <MediaGallery isGlobalDragging={isGlobalDragging} />
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
