@@ -16,13 +16,14 @@ export interface SR1Data {
   };
 }
 
-export type EvidenceLabel = 'me' | 'other_party' | 'scene' | 'document' | 'unlabeled';
+export type PrimaryLabel = 'me' | 'other_party' | 'scene' | 'paperwork' | 'unlabeled';
 
 export interface EvidenceFile {
   id: string;
   file: File;
   preview: string;
-  label: EvidenceLabel;
+  primaryLabel: PrimaryLabel;
+  secondaryLabels: string[];
   description: string;
   isFocused: boolean;
 }
