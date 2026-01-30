@@ -85,7 +85,7 @@ export default function Home() {
 
       <div className="max-w-6xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">SR-1 AI Assistant</h1>
+          <h1 className="text-3xl font-bold text-gray-900">SR-1 Assistant</h1>
           <p className="text-gray-600">Upload accident photos to generate your DMV report.</p>
         </header>
 
